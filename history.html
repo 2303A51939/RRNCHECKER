@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Search History · RRN Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#f0f4ff; --white:#fff; --primary:#1a56db; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --green:#16a34a; --green-bg:#dcfce7; --yellow:#d97706; --yellow-bg:#fef9c3; --red:#dc2626; --red-bg:#fee2e2; }
+    * { box-sizing: border-box; margin:0; padding:0; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); }
+    nav { background:var(--white); border-bottom:1px solid var(--border); padding:14px 24px; display:flex; align-items:center; justify-content:space-between; }
+    .nav-brand { display:flex; align-items:center; gap:10px; }
+    .nav-icon  { width:36px; height:36px; background:var(--primary); border-radius:10px; display:grid; place-items:center; font-size:18px; }
+    .nav-title { font-size:17px; font-weight:700; }
+    nav a { font-size:14px; color:var(--muted); text-decoration:none; font-weight:500; }
+    nav a:hover { color:var(--primary); }
+    .container { max-width:800px; margin:0 auto; padding:32px 20px; }
+    h1 { font-size:24px; font-weight:700; margin-bottom:6px; }
+    .sub { font-size:14px; color:var(--muted); margin-bottom:24px; }
+    .item { background:var(--white); border:1px solid var(--border); border-radius:14px; padding:16px 20px; margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .left { display:flex; flex-direction:column; gap:4px; }
+    .rrn  { font-family:'DM Mono',monospace; font-size:15px; font-weight:700; }
+    .meta { font-size:12px; color:var(--muted); }
+    .right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+    .pill { font-size:11px; font-weight:700; padding:4px 10px; border-radius:20px; }
+    .pill-success { background:var(--green-bg); color:var(--green); }
+    .pill-pending { background:var(--yellow-bg); color:var(--yellow); }
+    .pill-failed  { background:var(--red-bg);    color:var(--red); }
+    .amount { font-size:15px; font-weight:700; }
+    .empty { text-align:center; padding:60px; color:var(--muted); }
+    .empty-icon { font-size:48px; margin-bottom:12px; }
+  </style>
+</head>
+<body>
+<nav>
+  <div class="nav-brand"><div class="nav-icon">🏦</div><span class="nav-title">RRN Checker</span></div>
+  <div style="display:flex;gap:16px;align-items:center">
+    <a href="/">← Back</a>
+    <a href="/logout" style="color:var(--red)">Logout</a>
+  </div>
+</nav>
+<div class="container">
+  <h1>📋 Search History</h1>
+  <p class="sub">Your last 20 transaction searches</p>
+
+  {% if txns %}
+    {% for t in txns %}
+    <div class="item">
+      <div class="left">
+        <div class="rrn">RRN: {{ t.rrn }}</div>
+        <div class="meta">{{ t.app_name }} · {{ t.merchant }} · {{ t.bank }}</div>
+        <div class="meta">{{ t.searched_at.strftime('%d %b %Y, %I:%M %p') }}</div>
+      </div>
+      <div class="right">
+        <span class="pill pill-{{ t.status }}">{{ t.status.upper() }}</span>
+        <span class="amount">₹{{ "%.2f"|format(t.amount) }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">
+      <div class="empty-icon">🔍</div>
+      <div>No searches yet. Go check an RRN!</div>
+    </div>
+  {% endif %}
+</div>
+</body>
+</html>

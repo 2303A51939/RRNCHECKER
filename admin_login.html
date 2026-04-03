@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Login · RRN Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#f0f4ff; --white:#fff; --primary:#1a56db; --text:#111827; --muted:#6b7280; --border:#e5e7eb; --red:#dc2626; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); min-height:100vh; display:flex; align-items:center; justify-content:center; }
+    .card { background:var(--white); border-radius:20px; padding:36px; width:100%; max-width:380px; box-shadow:0 4px 24px rgba(0,0,0,0.08); }
+    .icon { font-size:40px; margin-bottom:16px; }
+    h2 { font-size:22px; font-weight:700; margin-bottom:6px; }
+    p  { font-size:14px; color:var(--muted); margin-bottom:24px; }
+    input { width:100%; padding:13px 16px; border:1.5px solid var(--border); border-radius:12px; font-size:15px; outline:none; margin-bottom:16px; }
+    input:focus { border-color:var(--primary); }
+    .btn { width:100%; padding:13px; background:var(--primary); color:#fff; border:none; border-radius:12px; font-size:15px; font-weight:600; cursor:pointer; }
+    .btn:hover { opacity:0.9; }
+    .err { background:#fee2e2; color:var(--red); padding:10px 14px; border-radius:8px; font-size:13px; margin-bottom:16px; }
+    a { color:var(--muted); font-size:13px; text-decoration:none; display:block; text-align:center; margin-top:14px; }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="icon">⚙️</div>
+  <h2>Admin Panel</h2>
+  <p>Enter admin password to access the dashboard</p>
+  {% if error %}<div class="err">{{ error }}</div>{% endif %}
+  <form method="POST">
+    <input type="password" name="password" placeholder="Admin password" autofocus/>
+    <button class="btn" type="submit">Login to Admin</button>
+  </form>
+  <a href="/">← Back to App</a>
+</div>
+</body>
+</html>

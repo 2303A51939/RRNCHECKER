@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Login · RRN Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f4ff;
+      --white: #ffffff;
+      --primary: #1a56db;
+      --primary-dark: #1341b0;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --green: #16a34a;
+      --red: #dc2626;
+      --shadow: 0 4px 24px rgba(26,86,219,0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+    }
+    .card {
+      background: var(--white);
+      border-radius: 24px;
+      padding: 40px 36px;
+      width: 100%; max-width: 420px;
+      box-shadow: var(--shadow);
+    }
+    .logo {
+      display: flex; align-items: center; gap: 12px;
+      margin-bottom: 32px;
+    }
+    .logo-icon {
+      width: 48px; height: 48px;
+      background: var(--primary);
+      border-radius: 14px;
+      display: grid; place-items: center;
+      font-size: 22px;
+    }
+    .logo h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+    .logo p  { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    h2 { font-size: 24px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+    .subtitle { font-size: 14px; color: var(--muted); margin-bottom: 28px; }
+
+    .step { display: none; }
+    .step.active { display: block; animation: fadeIn 0.3s ease; }
+
+    label { display: block; font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+    .input-row { display: flex; gap: 10px; margin-bottom: 16px; }
+    input[type=text], input[type=tel] {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      font-family: 'DM Mono', monospace;
+      font-size: 16px; color: var(--text);
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    input:focus { border-color: var(--primary); }
+
+    .btn {
+      width: 100%; padding: 14px;
+      background: var(--primary);
+      color: #fff; border: none;
+      border-radius: 12px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+    }
+    .btn:hover  { background: var(--primary-dark); }
+    .btn:active { transform: scale(0.98); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid var(--border);
+      color: var(--text);
+      margin-top: 10px;
+    }
+    .btn-outline:hover { background: var(--bg); }
+
+    .msg { margin-top: 12px; font-size: 13px; padding: 10px 14px; border-radius: 8px; display: none; }
+    .msg.show { display: block; }
+    .msg.success { background: #dcfce7; color: var(--green); }
+    .msg.error   { background: #fee2e2; color: var(--red); }
+
+    .otp-inputs { display: flex; gap: 10px; margin-bottom: 16px; justify-content: center; }
+    .otp-inputs input {
+      width: 48px; height: 52px;
+      text-align: center;
+      font-size: 22px; font-weight: 700;
+      border-radius: 12px;
+      padding: 0;
+    }
+
+    .timer { font-size: 12px; color: var(--muted); text-align: center; margin-top: 10px; }
+    .timer span { color: var(--primary); font-weight: 600; }
+
+    .demo-badge {
+      background: #fef9c3; color: #854d0e;
+      border-radius: 8px; padding: 8px 12px;
+      font-size: 12px; margin-top: 12px;
+      text-align: center;
+    }
+    .demo-otp-display {
+      font-family: 'DM Mono', monospace;
+      font-size: 20px; font-weight: 700;
+      letter-spacing: 4px; color: var(--primary);
+      display: block; margin-top: 4px;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">🏦</div>
+    <div>
+      <h1>RRN Checker</h1>
+      <p>Transaction Status Portal</p>
+    </div>
+  </div>
+
+  <!-- Step 1: Mobile -->
+  <div class="step active" id="step1">
+    <h2>Welcome</h2>
+    <p class="subtitle">Enter your mobile number to get started</p>
+    <label>Mobile Number</label>
+    <div class="input-row">
+      <input type="tel" id="mobileInput" placeholder="10-digit mobile number" maxlength="10"/>
+    </div>
+    <button class="btn" id="sendOtpBtn" onclick="sendOTP()">Send OTP</button>
+    <div class="msg" id="msg1"></div>
+  </div>
+
+  <!-- Step 2: OTP -->
+  <div class="step" id="step2">
+    <h2>Verify OTP</h2>
+    <p class="subtitle">Enter the 6-digit OTP sent to <strong id="mobileDisplay"></strong></p>
+    <div class="otp-inputs">
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 0)"/>
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 1)"/>
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 2)"/>
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 3)"/>
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 4)"/>
+      <input type="text" maxlength="1" class="otp-digit" oninput="otpInput(this, 5)"/>
+    </div>
+    <div class="timer">Resend OTP in <span id="timerDisplay">60</span>s</div>
+    <div class="demo-badge" id="demoBadge" style="display:none">
+      Demo OTP: <span class="demo-otp-display" id="demoOtpDisplay"></span>
+    </div>
+    <button class="btn" style="margin-top:16px" id="verifyBtn" onclick="verifyOTP()">Verify & Continue</button>
+    <button class="btn btn-outline" onclick="goBack()">← Change Number</button>
+    <div class="msg" id="msg2"></div>
+  </div>
+</div>
+
+<script>
+let mobile = '';
+let timerInterval;
+
+function showMsg(id, text, type) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = `msg show ${type}`;
+}
+
+async function sendOTP() {
+  mobile = document.getElementById('mobileInput').value.trim();
+  if (!/^\d{10}$/.test(mobile)) {
+    showMsg('msg1', 'Please enter a valid 10-digit mobile number.', 'error');
+    return;
+  }
+  const btn = document.getElementById('sendOtpBtn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+
+  const res  = await fetch('/send_otp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mobile}) });
+  const data = await res.json();
+
+  btn.disabled = false; btn.textContent = 'Send OTP';
+
+  if (data.success) {
+    document.getElementById('step1').classList.remove('active');
+    document.getElementById('step2').classList.add('active');
+    document.getElementById('mobileDisplay').textContent = mobile;
+    startTimer();
+    // Show demo OTP if SMS failed
+    if (data.demo_otp) {
+      document.getElementById('demoBadge').style.display = 'block';
+      document.getElementById('demoOtpDisplay').textContent = data.demo_otp;
+    }
+  } else {
+    showMsg('msg1', data.message, 'error');
+  }
+}
+
+function otpInput(el, idx) {
+  el.value = el.value.replace(/\D/g,'');
+  const digits = document.querySelectorAll('.otp-digit');
+  if (el.value && idx < 5) digits[idx+1].focus();
+  // Auto-verify when all filled
+  if ([...digits].every(d => d.value)) verifyOTP();
+}
+
+async function verifyOTP() {
+  const digits = [...document.querySelectorAll('.otp-digit')].map(d => d.value).join('');
+  if (digits.length < 6) { showMsg('msg2', 'Enter complete 6-digit OTP.', 'error'); return; }
+
+  const btn = document.getElementById('verifyBtn');
+  btn.disabled = true; btn.textContent = 'Verifying...';
+
+  const res  = await fetch('/verify_otp', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({mobile, otp: digits}) });
+  const data = await res.json();
+
+  if (data.success) {
+    window.location.href = '/';
+  } else {
+    showMsg('msg2', data.message, 'error');
+    btn.disabled = false; btn.textContent = 'Verify & Continue';
+  }
+}
+
+function goBack() {
+  document.getElementById('step2').classList.remove('active');
+  document.getElementById('step1').classList.add('active');
+  clearInterval(timerInterval);
+}
+
+function startTimer() {
+  let t = 60;
+  timerInterval = setInterval(() => {
+    t--;
+    document.getElementById('timerDisplay').textContent = t;
+    if (t <= 0) { clearInterval(timerInterval); document.getElementById('timerDisplay').textContent = '0 (Resend)'; }
+  }, 1000);
+}
+
+document.getElementById('mobileInput').addEventListener('keydown', e => { if(e.key==='Enter') sendOTP(); });
+</script>
+</body>
+</html>

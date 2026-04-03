@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RRN Status Checker</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f4ff;
+      --white: #fff;
+      --primary: #1a56db;
+      --primary-dark: #1341b0;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --green: #16a34a; --green-bg: #dcfce7;
+      --yellow: #d97706; --yellow-bg: #fef9c3;
+      --red: #dc2626; --red-bg: #fee2e2;
+      --shadow: 0 2px 16px rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    /* NAV */
+    nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-brand { display: flex; align-items: center; gap: 10px; }
+    .nav-icon { width: 36px; height: 36px; background: var(--primary); border-radius: 10px; display: grid; place-items: center; font-size: 18px; }
+    .nav-title { font-size: 17px; font-weight: 700; }
+    .nav-links { display: flex; align-items: center; gap: 16px; }
+    .nav-links a { font-size: 14px; color: var(--muted); text-decoration: none; font-weight: 500; }
+    .nav-links a:hover { color: var(--primary); }
+    .nav-mobile { font-size: 13px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+    /* MAIN */
+    .container { max-width: 800px; margin: 0 auto; padding: 32px 20px 60px; }
+
+    /* STEP INDICATOR */
+    .steps-bar {
+      display: flex; align-items: center; gap: 0;
+      margin-bottom: 32px;
+    }
+    .step-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 500; color: var(--muted);
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      border: 2px solid var(--border);
+      display: grid; place-items: center;
+      font-size: 12px; font-weight: 700;
+      background: var(--white);
+      transition: all 0.3s;
+    }
+    .step-item.active .step-num { border-color: var(--primary); color: var(--primary); }
+    .step-item.done .step-num   { background: var(--primary); border-color: var(--primary); color: #fff; }
+    .step-line { flex: 1; height: 2px; background: var(--border); margin: 0 8px; }
+    .step-line.done { background: var(--primary); }
+
+    /* SECTION TITLE */
+    .section-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .section-sub   { font-size: 14px; color: var(--muted); margin-bottom: 20px; }
+
+    /* APP GRID */
+    .app-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; margin-bottom: 28px;
+    }
+    .app-card {
+      background: var(--white);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 12px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .app-card:hover  { border-color: var(--primary); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .app-card.selected { border-color: var(--primary); background: #eff6ff; }
+    .app-emoji { font-size: 28px; margin-bottom: 6px; }
+    .app-name  { font-size: 13px; font-weight: 600; color: var(--text); }
+
+    /* RRN SECTION */
+    .rrn-section {
+      background: var(--white);
+      border-radius: 20px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      display: none;
+      animation: fadeUp 0.4s ease;
+    }
+    .rrn-section.show { display: block; }
+
+    .selected-app-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      border-radius: 20px; padding: 6px 14px;
+      font-size: 13px; font-weight: 600; color: var(--primary);
+      margin-bottom: 20px; cursor: pointer;
+    }
+
+    label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+    .input-wrap { position: relative; }
+    .input-wrap input {
+      width: 100%; padding: 14px 16px;
+      border: 1.5px solid var(--border); border-radius: 12px;
+      font-family: 'DM Mono', monospace; font-size: 18px;
+      color: var(--text); outline: none;
+      letter-spacing: 2px;
+      transition: border-color 0.2s;
+    }
+    .input-wrap input:focus { border-color: var(--primary); }
+    .input-hint { font-size: 12px; color: var(--muted); margin-top: 6px; margin-bottom: 20px; }
+
+    .btn {
+      width: 100%; padding: 14px;
+      background: var(--primary); color: #fff;
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 600;
+      cursor: pointer; transition: background 0.2s;
+      font-family: 'DM Sans', sans-serif;
+    }
+    .btn:hover { background: var(--primary-dark); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* LOADER */
+    .loader { display: none; text-align: center; padding: 32px 0; }
+    .loader.show { display: block; }
+    .spinner {
+      width: 40px; height: 40px; border: 3px solid var(--border);
+      border-top-color: var(--primary); border-radius: 50%;
+      animation: spin 0.8s linear infinite; margin: 0 auto 12px;
+    }
+    .loader p { color: var(--muted); font-size: 14px; }
+
+    /* RESULT */
+    .result { display: none; margin-top: 24px; animation: fadeUp 0.4s ease; }
+    .result.show { display: block; }
+
+    .result-header {
+      border-radius: 16px; padding: 24px;
+      display: flex; align-items: center; gap: 16px;
+      margin-bottom: 16px;
+    }
+    .result-header.success { background: var(--green-bg); }
+    .result-header.pending { background: var(--yellow-bg); }
+    .result-header.failed  { background: var(--red-bg); }
+
+    .status-badge {
+      width: 56px; height: 56px; border-radius: 50%;
+      display: grid; place-items: center; font-size: 26px;
+      flex-shrink: 0;
+    }
+    .success .status-badge { background: #bbf7d0; }
+    .pending .status-badge { background: #fde68a; }
+    .failed  .status-badge { background: #fecaca; }
+
+    .result-title { font-size: 22px; font-weight: 700; }
+    .result-subtitle { font-size: 14px; color: var(--muted); margin-top: 2px; }
+    .result-amount { font-size: 28px; font-weight: 700; margin-top: 4px; }
+    .success .result-amount { color: var(--green); }
+    .pending .result-amount { color: var(--yellow); }
+    .failed  .result-amount { color: var(--red); }
+
+    /* DETAILS GRID */
+    .details-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 16px;
+    }
+    .detail-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 14px 16px;
+    }
+    .detail-label { font-size: 11px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    .detail-value { font-size: 14px; font-weight: 600; margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+    /* REFUND TIMELINE */
+    .timeline-card {
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px; margin-bottom: 16px;
+    }
+    .timeline-title { font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+    .timeline-item  { display: flex; gap: 14px; margin-bottom: 16px; }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .tl-dot {
+      width: 20px; height: 20px; border-radius: 50%;
+      flex-shrink: 0; margin-top: 2px;
+      display: grid; place-items: center; font-size: 10px;
+    }
+    .tl-dot.done  { background: var(--green); color: #fff; }
+    .tl-dot.pend  { background: var(--border); }
+    .tl-step { font-size: 14px; font-weight: 600; }
+    .tl-date { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* NEW SEARCH BTN */
+    .btn-outline {
+      background: transparent; border: 1.5px solid var(--border);
+      color: var(--text); margin-top: 12px;
+    }
+    .btn-outline:hover { background: var(--bg); }
+
+    /* HISTORY PREVIEW */
+    .history-section { margin-top: 40px; }
+    .history-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+    .history-item {
+      background: var(--white); border-radius: 12px;
+      padding: 14px 16px; margin-bottom: 8px;
+      display: flex; align-items: center; justify-content: space-between;
+      border: 1px solid var(--border);
+    }
+    .h-left { display: flex; align-items: center; gap: 12px; }
+    .h-icon { font-size: 20px; }
+    .h-rrn  { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; }
+    .h-app  { font-size: 12px; color: var(--muted); }
+    .status-pill {
+      font-size: 11px; font-weight: 700; padding: 4px 10px;
+      border-radius: 20px; letter-spacing: 0.5px;
+    }
+    .pill-success { background: var(--green-bg); color: var(--green); }
+    .pill-pending { background: var(--yellow-bg); color: var(--yellow); }
+    .pill-failed  { background: var(--red-bg);    color: var(--red); }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @media (max-width: 500px) {
+      .app-grid { grid-template-columns: repeat(3, 1fr); }
+      .details-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-icon">🏦</div>
+    <span class="nav-title">RRN Checker</span>
+  </div>
+  <div class="nav-links">
+    <a href="/history">📋 History</a>
+    <a href="/admin">⚙️ Admin</a>
+    <span class="nav-mobile" id="navMobile"></span>
+    <a href="/logout" style="color:var(--red)">Logout</a>
+  </div>
+</nav>
+
+<div class="container">
+
+  <!-- Step Bar -->
+  <div class="steps-bar">
+    <div class="step-item done" id="s1"><div class="step-num">✓</div> Login</div>
+    <div class="step-line" id="l1"></div>
+    <div class="step-item active" id="s2"><div class="step-num">2</div> Select App</div>
+    <div class="step-line" id="l2"></div>
+    <div class="step-item" id="s3"><div class="step-num">3</div> Enter RRN</div>
+    <div class="step-line" id="l3"></div>
+    <div class="step-item" id="s4"><div class="step-num">4</div> View Status</div>
+  </div>
+
+  <!-- Step 1: Select App -->
+  <div id="appStep">
+    <div class="section-title">Select Payment App</div>
+    <div class="section-sub">Choose the app you used for this transaction</div>
+    <div class="app-grid" id="appGrid">
+      {% for app in apps %}
+      <div class="app-card" onclick="selectApp('{{app.id}}', '{{app.name}}', '{{app.icon}}')" id="app-{{app.id}}">
+        <div class="app-emoji">{{app.icon}}</div>
+        <div class="app-name">{{app.name}}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Step 2: RRN Input -->
+  <div class="rrn-section" id="rrnStep">
+    <div class="selected-app-badge" onclick="changeApp()" id="selectedBadge">
+      <span id="selectedIcon"></span>
+      <span id="selectedName"></span>
+      <span style="color:var(--muted)">· Change</span>
+    </div>
+
+    <div class="section-title">Enter RRN Number</div>
+    <div class="section-sub">Reference Retrieval Number from your transaction</div>
+
+    <label>RRN / UTR Number</label>
+    <div class="input-wrap">
+      <input type="text" id="rrnInput" placeholder="e.g. 123456789012" maxlength="15"/>
+    </div>
+    <p class="input-hint">6–15 digit numeric RRN found in your payment app under transaction details</p>
+
+    <button class="btn" id="checkBtn" onclick="checkRRN()">Check Transaction Status →</button>
+
+    <!-- Loader -->
+    <div class="loader" id="loader">
+      <div class="spinner"></div>
+      <p>Fetching transaction details...</p>
+    </div>
+
+    <!-- Result -->
+    <div class="result" id="result"></div>
+  </div>
+
+</div>
+
+<script>
+let selectedAppId = '', selectedAppName = '', selectedAppIcon = '';
+
+function selectApp(id, name, icon) {
+  selectedAppId = id; selectedAppName = name; selectedAppIcon = icon;
+  document.querySelectorAll('.app-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('app-' + id).classList.add('selected');
+
+  setTimeout(() => {
+    document.getElementById('appStep').style.display = 'none';
+    document.getElementById('rrnStep').classList.add('show');
+    document.getElementById('selectedIcon').textContent = icon;
+    document.getElementById('selectedName').textContent = name;
+    // Update step bar
+    document.getElementById('s2').classList.remove('active'); document.getElementById('s2').classList.add('done'); document.getElementById('s2').querySelector('.step-num').textContent = '✓';
+    document.getElementById('l2').classList.add('done');
+    document.getElementById('s3').classList.add('active');
+    document.getElementById('rrnInput').focus();
+  }, 150);
+}
+
+function changeApp() {
+  document.getElementById('rrnStep').classList.remove('show');
+  document.getElementById('appStep').style.display = 'block';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('s2').classList.remove('done'); document.getElementById('s2').classList.add('active'); document.getElementById('s2').querySelector('.step-num').textContent = '2';
+  document.getElementById('l2').classList.remove('done');
+  document.getElementById('s3').classList.remove('active');
+}
+
+async function checkRRN() {
+  const rrn = document.getElementById('rrnInput').value.trim();
+  if (!rrn || !/^\d{6,15}$/.test(rrn)) {
+    alert('Please enter a valid 6–15 digit RRN number.');
+    return;
+  }
+
+  document.getElementById('checkBtn').disabled = true;
+  document.getElementById('loader').classList.add('show');
+  document.getElementById('result').classList.remove('show');
+
+  await new Promise(r => setTimeout(r, 1200)); // Realistic delay
+
+  const res  = await fetch('/check_rrn', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({rrn, app_id: selectedAppId}) });
+  const json = await res.json();
+
+  document.getElementById('loader').classList.remove('show');
+  document.getElementById('checkBtn').disabled = false;
+
+  if (!json.success) { alert(json.message); return; }
+
+  // Update step bar
+  document.getElementById('s3').classList.remove('active'); document.getElementById('s3').classList.add('done'); document.getElementById('s3').querySelector('.step-num').textContent = '✓';
+  document.getElementById('l3').classList.add('done');
+  document.getElementById('s4').classList.add('active');
+
+  renderResult(json.data);
+}
+
+function renderResult(d) {
+  const icons   = { success: '✅', pending: '⏳', failed: '❌' };
+  const labels  = { success: 'Transaction Successful', pending: 'Transaction Pending', failed: 'Transaction Failed' };
+  const submsg  = { success: 'Amount has been debited successfully', pending: 'Your payment is being processed', failed: 'Payment was not completed' };
+
+  let timelineHTML = '';
+  if (d.refund_timeline) {
+    timelineHTML = `
+    <div class="timeline-card">
+      <div class="timeline-title">🔄 Refund Timeline</div>
+      ${d.refund_timeline.map(t => `
+        <div class="timeline-item">
+          <div class="tl-dot ${t.done ? 'done' : 'pend'}">${t.done ? '✓' : ''}</div>
+          <div>
+            <div class="tl-step">${t.step}</div>
+            <div class="tl-date">${t.date}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  document.getElementById('result').innerHTML = `
+    <div class="result-header ${d.status}">
+      <div class="status-badge">${icons[d.status]}</div>
+      <div>
+        <div class="result-title">${labels[d.status]}</div>
+        <div class="result-subtitle">${submsg[d.status]}</div>
+        <div class="result-amount">₹${parseFloat(d.amount).toLocaleString('en-IN', {minimumFractionDigits:2})}</div>
+      </div>
+    </div>
+
+    <div class="details-grid">
+      <div class="detail-card"><div class="detail-label">RRN Number</div><div class="detail-value">${d.rrn}</div></div>
+      <div class="detail-card"><div class="detail-label">UTR Number</div><div class="detail-value">${d.utr}</div></div>
+      <div class="detail-card"><div class="detail-label">Payment App</div><div class="detail-value">${d.app_name}</div></div>
+      <div class="detail-card"><div class="detail-label">Payment Mode</div><div class="detail-value">${d.payment_mode}</div></div>
+      <div class="detail-card"><div class="detail-label">Merchant</div><div class="detail-value">${d.merchant}</div></div>
+      <div class="detail-card"><div class="detail-label">Bank</div><div class="detail-value">${d.bank}</div></div>
+      <div class="detail-card"><div class="detail-label">VPA / UPI ID</div><div class="detail-value">${d.vpa}</div></div>
+      <div class="detail-card"><div class="detail-label">Date & Time</div><div class="detail-value" style="font-size:12px">${d.timestamp}</div></div>
+    </div>
+
+    ${timelineHTML}
+
+    <div class="detail-card" style="margin-bottom:12px">
+      <div class="detail-label">Transaction ID</div>
+      <div class="detail-value" style="font-size:12px;word-break:break-all">${d.txn_id}</div>
+    </div>
+
+    <button class="btn btn-outline" onclick="newSearch()">← Check Another Transaction</button>
+  `;
+  document.getElementById('result').classList.add('show');
+  document.getElementById('result').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function newSearch() {
+  document.getElementById('rrnInput').value = '';
+  document.getElementById('result').classList.remove('show');
+  document.getElementById('result').innerHTML = '';
+  document.getElementById('s4').classList.remove('active');
+  document.getElementById('s3').classList.remove('done'); document.getElementById('s3').classList.add('active'); document.getElementById('s3').querySelector('.step-num').textContent = '3';
+  document.getElementById('l3').classList.remove('done');
+}
+
+document.getElementById('rrnInput').addEventListener('keydown', e => { if(e.key==='Enter') checkRRN(); });
+</script>
+</body>
+</html>
